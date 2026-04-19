@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "profile": {
+      "title": "Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "location": { "type": "string" },
+        "resumeUrl": { "type": "string" },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "github": { "type": "string" },
+            "linkedin": { "type": "string" },
+            "twitter": { "type": "string" },
+            "email": { "type": "string" },
+            "whatsapp": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "role", "bio"]
+    },
+    "project": {
+      "title": "Project",
+      "description": "Portfolio project item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "techStack": { "type": "array", "items": { "type": "string" } },
+        "liveUrl": { "type": "string" },
+        "githubUrl": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description"]
+    },
+    "skill": {
+      "title": "Skill",
+      "description": "Professional skill",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Frontend", "Backend", "Languages", "Tools", "Others"] },
+        "proficiency": { "type": "number" },
+        "icon": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "category", "proficiency"]
+    },
+    "blogPost": {
+      "title": "Blog Post",
+      "description": "Article for the blog section",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content"]
+    },
+    "certificate": {
+      "title": "Certificate",
+      "description": "Award or certification",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "issuer": { "type": "string" },
+        "date": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "link": { "type": "string" }
+      },
+      "required": ["title", "issuer"]
+    },
+    "contactMessage": {
+      "title": "Contact Message",
+      "description": "Message from portfolio visitors",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["unread", "read", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "visitorCount": {
+      "title": "Visitor Count",
+      "description": "Daily visitor statistics",
+      "type": "object",
+      "properties": {
+        "count": { "type": "number" },
+        "date": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/settings/profile": { "schema": "profile", "description": "Global profile settings" },
+    "/projects/{projectId}": { "schema": "project", "description": "Portfolio projects" },
+    "/skills/{skillId}": { "schema": "skill", "description": "Professional skills" },
+    "/blog/{postId}": { "schema": "blogPost", "description": "Blog articles" },
+    "/certificates/{certId}": { "schema": "certificate", "description": "Certifications" },
+    "/messages/{messageId}": { "schema": "contactMessage", "description": "Inbound messages" },
+    "/stats/visitors": { "schema": "visitorCount", "description": "Aggregated visitor stats" }
+  }
+}

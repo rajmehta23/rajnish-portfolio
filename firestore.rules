@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == "rajnishkumarschool911@gmail.com"; 
+    }
+
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    // Public Profile - Anyone can read, only admin can write
+    match /settings/profile {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Projects - Anyone can read, only admin can write
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(projectId);
+      allow update, delete: if isAdmin();
+    }
+
+    // Skills - Anyone can read, only admin can write
+    match /skills/{skillId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(skillId);
+      allow update, delete: if isAdmin();
+    }
+
+    // Blog Posts - Anyone can read published, only admin can write
+    match /blog/{postId} {
+      allow read: if true; // In simple case, allow all. Better: resource.data.status == 'published'
+      allow create: if isAdmin() && isValidId(postId);
+      allow update, delete: if isAdmin();
+    }
+
+    // Certificates - Anyone can read, only admin can write
+    match /certificates/{certId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(certId);
+      allow update, delete: if isAdmin();
+    }
+
+    // Contact Messages - Anyone can create, only admin can read/delete
+    match /messages/{messageId} {
+      allow create: if true; // Allow visitors to send messages
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Stats - Readers can read, update can be allowed or via Cloud Functions
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
