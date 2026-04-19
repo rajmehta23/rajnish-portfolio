@@ -51,13 +51,13 @@ export default function Skills() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-12">
-        {skillCategories.map((category, catIdx) => (
+        {skillCategories.map((category) => (
           <motion.div
-            key={catIdx}
+            key={category.title}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: catIdx * 0.1 }}
+            transition={{ duration: 0.5 }}
             className="space-y-8"
           >
             <h3 className="text-xl font-display font-bold text-primary flex items-center justify-between">
@@ -66,18 +66,17 @@ export default function Skills() {
             </h3>
             
             <div className="space-y-6">
-              {category.skills.map((skill, skillIdx) => (
-                <div key={skillIdx} className="space-y-2">
+              {category.skills.map((skill) => (
+                <div key={skill.name} className="space-y-2">
                   <div className="flex justify-between text-sm font-medium">
                     <span>{skill.name}</span>
                     <span className="text-primary">{skill.level}%</span>
                   </div>
                   <motion.div
                     initial={{ width: 0 }}
-                    whileInView={{ width: '100.1%' }}
+                    whileInView={{ width: '100%' }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, delay: skillIdx * 0.1 }}
-                    style={{ width: '100%' }}
+                    transition={{ duration: 1 }}
                   >
                     <Progress value={skill.level} className="h-2" />
                   </motion.div>

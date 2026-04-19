@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
 import { GraduationCap, MapPin, Target, User, Award, ShieldCheck } from 'lucide-react';
 
 export default function About() {
+  const [imageError, setImageError] = useState(false);
   const timeline = [
     { year: '2024 - 2027', title: 'Bachelor of Computer Applications (BCA)', institution: "St. Xavier's College of Management & Technology", description: 'Ranked 1st in University/College internal rankings for the first academic year.' },
     { year: '2022 - 2024', title: 'Higher Secondary Education (CBSE 12th)', institution: 'Gyandeep High School', description: 'Science stream with a strong focus on Mathematics and Physics.' },
@@ -26,21 +28,19 @@ export default function About() {
           <div className="relative group w-full mx-auto lg:mx-0">
             <div className="absolute -inset-4 bg-primary/15 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="relative rounded-3xl overflow-hidden border-2 border-primary/20 bg-muted aspect-[4/5] shadow-2xl flex items-center justify-center p-0">
-              <img 
-                src="/about_me_image.jpeg" 
-                alt="Rajnish Kumar" 
-                className="w-full h-full object-cover transition-all duration-700 hover:scale-110"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).classList.add('hidden');
-                  const parent = (e.target as HTMLImageElement).parentElement;
-                  if (parent) {
-                    const icon = document.createElement('div');
-                    icon.className = "flex flex-col items-center text-primary/40 p-4 text-center";
-                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>';
-                    parent.appendChild(icon);
-                  }
-                }}
-              />
+              {!imageError ? (
+                <img 
+                  src="/about_me_image.jpeg" 
+                  alt="Rajnish Kumar" 
+                  className="w-full h-full object-cover transition-all duration-700 hover:scale-110"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="flex flex-col items-center text-primary/40 p-4 text-center">
+                  <User size={64} strokeWidth={1} />
+                  <p className="text-xs mt-2 opacity-50 uppercase tracking-tighter">Image Unavailable</p>
+                </div>
+              )}
               <div className="absolute bottom-6 left-6 right-6 p-6 glass rounded-2xl border border-white/10 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">

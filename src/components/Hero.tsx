@@ -2,11 +2,13 @@ import { motion } from 'framer-motion';
 import { Typewriter } from 'react-simple-typewriter';
 import { buttonVariants } from './ui/button';
 import { ArrowRight, Download, Github, Linkedin, ExternalLink } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { UserCircle } from 'lucide-react';
 import gsap from 'gsap';
 
 export default function Hero() {
+  const [imageError, setImageError] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -116,21 +118,18 @@ export default function Hero() {
             <div className="absolute -inset-2 border border-primary/20 rounded-full animate-[spin_10s_linear_infinite]" />
             
             <div className="relative w-full h-full rounded-full glass-card overflow-hidden group border-2 border-primary/30 flex items-center justify-center bg-muted shadow-2xl">
-              <img 
-                src="/rajnish_profile.jpg" 
-                alt="Rajnish Kumar" 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).classList.add('hidden');
-                  const parent = (e.target as HTMLImageElement).parentElement;
-                  if (parent) {
-                    const icon = document.createElement('div');
-                    icon.className = "flex flex-col items-center text-primary/40";
-                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-circle"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>';
-                    parent.appendChild(icon);
-                  }
-                }}
-              />
+              {!imageError ? (
+                <img 
+                  src="/rajnish_profile.jpg" 
+                  alt="Rajnish Kumar" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="flex flex-col items-center text-primary/40">
+                  <UserCircle size={64} strokeWidth={1} />
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex items-end p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                   <div className="text-primary font-bold">Top Rank #1</div>
