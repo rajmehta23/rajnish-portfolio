@@ -30,7 +30,7 @@ export default function About() {
             <div className="relative rounded-3xl overflow-hidden border-2 border-primary/20 bg-muted aspect-[4/5] shadow-2xl flex items-center justify-center p-0">
               {!imageError ? (
                 <img 
-                  src={`${import.meta.env.BASE_URL}about_me_image.jpeg`}
+                  src="/rajnish-portfolio/about_me_image.jpeg"
                   alt="Rajnish Kumar" 
                   className="w-full h-full object-cover transition-all duration-700 hover:scale-110"
                   onError={() => setImageError(true)}
