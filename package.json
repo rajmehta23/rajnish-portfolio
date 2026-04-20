@@ -9,9 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

@@ -85,9 +85,16 @@ export default function Hero() {
             </div>
             <div className="action-anim">
               <a 
-                href="/resume.pdf" 
-                download
+                href={`${import.meta.env.BASE_URL}resume.pdf`}
+                target="_blank"
+                rel="noreferrer"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8 hover:scale-105 transition-transform group")}
+                onClick={(e) => {
+                  // Fallback alert just in case the file is missing in the deployed environment
+                  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                     alert("Remember to place your actual 'resume.pdf' file inside the 'public' folder of this project!");
+                  }
+                }}
               >
                 Download CV
                 <Download className="ml-2 h-4 w-4 group-hover:translate-y-1 transition-transform" />
