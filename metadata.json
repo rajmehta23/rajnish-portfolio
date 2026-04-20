@@ -1,6 +1,6 @@
 {
   "name": "Rajnish Portfolio",
-  "description": "A futuristic, professional portfolio for Rajnish Kumar, featuring a dynamic admin dashboard, AI chatbot, and smooth animations.",
+  "description": "A futuristic, professional portfolio for Rajnish Kumar, featuring a dynamic admin dashboard, virtual assistant, and smooth animations.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["firebase", "ai_chatbot"]
+  "majorCapabilities": ["firebase", "virtual_assistant"]
 }

@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from './components/ThemeProvider';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Chatbot from './components/Chatbot';
+import VirtualAgent from './components/VirtualAgent';
 const ThreeCanvas = lazy(() => import('./components/ThreeCanvas'));
 
 // Lazy loading for better performance
@@ -46,7 +46,7 @@ export default function App() {
             </Suspense>
           </main>
           <Footer />
-          <Chatbot />
+          <VirtualAgent />
           <Toaster position="bottom-right" />
         </div>
       </BrowserRouter>

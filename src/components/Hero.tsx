@@ -69,7 +69,7 @@ export default function Hero() {
           
           <p className="hero-anim text-lg text-muted-foreground max-w-xl leading-relaxed">
             Aspiring Software Developer currently in BCA 2nd Year (2025-26). 
-            Passionate about building scalable web applications and exploring Artificial Intelligence. 
+            Passionate about building scalable web applications and exploring advanced computer science concepts. 
             Ranked 1st in BCA 1st Year (2024-25) with a merit certificate.
           </p>
 

@@ -6,11 +6,11 @@ import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { getGeminiResponse } from '../lib/gemini';
 
-export default function Chatbot() {
+export default function VirtualAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { id: '1', role: 'bot', text: "Hi! I'm Rajnish's AI assistant. Ask me anything about his skills, projects, or background!" }
+    { id: '1', role: 'bot', text: "Hi! I'm Rajnish's virtual assistant. Ask me anything about his skills, projects, or background!" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -29,7 +29,7 @@ export default function Chatbot() {
     scrollToBottom('smooth');
   }, [messages, isLoading, isOpen]);
 
-  // Focus input when chatbot opens
+  // Focus input when agent opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -79,7 +79,7 @@ export default function Chatbot() {
                   <Bot size={20} />
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Rajnish AI</p>
+                  <p className="font-bold text-sm">Virtual Agent</p>
                   <p className="text-[10px] opacity-80 flex items-center">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
                     Online & Ready

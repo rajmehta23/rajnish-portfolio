@@ -265,7 +265,7 @@ function AdminProjects() {
                 <Input 
                   value={newProject.tags} 
                   onChange={(e) => setNewProject({...newProject, tags: e.target.value})}
-                  placeholder="React, Tailwind, AI" 
+                  placeholder="React, Tailwind, Node" 
                   className="rounded-xl border-white/10 bg-black/20"
                 />
               </div>
@@ -479,7 +479,7 @@ function AdminSystem() {
     },
     {
       title: 'Personal Premium Portfolio',
-      description: 'A high-performance modern portfolio featuring glassmorphism UI, GSAP animations, and integrated Gemini AI chatbot.',
+      description: 'A high-performance modern portfolio featuring glassmorphism UI, GSAP animations, and an integrated interactive chat interface.',
       image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=60&w=600&h=450',
       tags: ['React 19', 'Tailwind', 'GSAP', 'Firebase'],
       github: '#',

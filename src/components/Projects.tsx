@@ -32,23 +32,27 @@ const initialProjects = [
     `
   },
   {
-    title: 'Automated Result Generator',
-    description: 'A Python-powered system designed to automate student result cards from Excel data, reducing manual processing errors by 90%.',
+    title: 'Automated PDF Result Generator',
+    description: 'Developed an Automated PDF Generator for Student Results that converts student marks and academic data from Excel sheets into well-formatted result PDFs using Python. Built with powerful libraries like Pandas, OpenPyXL, and ReportLab / FPDF.',
     image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=60&w=600&h=450',
-    tags: ['Python', 'Pandas', 'Excel Automation'],
+    tags: ['Python', 'Pandas', 'OpenPyXL', 'ReportLab / FPDF'],
     github: '#',
     live: '#',
     fullStory: `
-      This project was born out of a real-world necessity at my college. Teachers were spending days manually entering marks into templates. I built a Python engine using Pandas to parse complex, multi-sheet Excel files.
+      This system was developed to solve the complex challenge of managing and generating student result reports at a large scale. By leveraging Python's rich ecosystem, I built a tool that converts student marks and academic data directly from Excel sheets into professional, well-formatted PDFs.
       
-      I used the FPDF library to take that structured data and generate millimetre-perfect PDF result cards. Each PDF includes a QR code that links back to a verification portal.
+      The core processing uses Pandas for efficient data manipulation and OpenPyXL for precise Excel handling. For high-quality document generation, I implemented a flexible layout engine using ReportLab and FPDF, ensuring every result card meets institutional design standards.
       
-      The automation logic includes "sanity checks" to flag unusual grades or missing data before the PDFs are generated, ensuring absolute accuracy for hundreds of students in a single run.
+      Key Impact:
+      - Reduces manual data entry work by over 90%.
+      - Eliminates human errors inherent in bulk manual processing.
+      - Enables college administration to generate hundreds of professional reports in seconds.
+      - Provides a scalable solution for academic data management.
     `
   },
   {
     title: 'Personal Premium Portfolio',
-    description: 'A high-performance modern portfolio featuring glassmorphism UI, GSAP animations, and integrated Gemini AI chatbot.',
+    description: 'A high-performance modern portfolio featuring glassmorphism UI, GSAP animations, and an integrated interactive chat interface.',
     image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=60&w=600&h=450',
     tags: ['React 19', 'Tailwind', 'GSAP', 'Firebase'],
     github: '#',
@@ -58,7 +62,7 @@ const initialProjects = [
       
       The "Glassmorphism" UI was achieved through complex Backdrop Filter combinations and semi-transparent color scales. I integrated Firebase for a live Admin Dashboard, allowing me to update my projects and read visitor messages in real-time.
       
-      The most rewarding part was implementing the Gemini AI Chatbot, which uses custom prompts to answer questions about my background and skills, providing an interactive "hiring" experience for potential employers.
+      The most rewarding part was implementing the interactive chat interface, which uses custom prompts to answer questions about my background and skills, providing an interactive "hiring" experience for potential employers.
     `
   }
 ];

@@ -1,37 +1,38 @@
 import { GoogleGenAI } from "@google/genai";
 
-let aiInstance: GoogleGenAI | null = null;
+let serviceInstance: GoogleGenAI | null = null;
 
-const getAI = () => {
-  if (!aiInstance) {
+const getService = () => {
+  if (!serviceInstance) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn("GEMINI_API_KEY is missing. Chatbot will be unavailable.");
+      console.warn("API_KEY is missing. Virtual Agent will be unavailable.");
       return null;
     }
-    aiInstance = new GoogleGenAI({ apiKey });
+    serviceInstance = new GoogleGenAI({ apiKey });
   }
-  return aiInstance;
+  return serviceInstance;
 };
 
 export const getGeminiResponse = async (prompt: string, context: string) => {
-  const ai = getAI();
-  if (!ai) {
-    throw new Error("AI Service not initialized. Please configure GEMINI_API_KEY.");
+  const service = getService();
+  if (!service) {
+    throw new Error("Service not initialized. Please configure API_KEY.");
   }
 
-  const response = await ai.models.generateContent({
+  const response = await service.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: [{ 
       role: 'user', 
       parts: [{ 
         text: `
-          You are an AI assistant for Rajnish Kumar's portfolio website. 
+          You are a virtual agent for Rajnish Kumar's portfolio website. 
           Rajnish is a BCA 2nd-year student at St. Xavier's College of Management and Technology, Patna (2024-2027 batch).
           He is an aspiring Software / Full Stack Developer.
           His skills include: Java, C, C++, Python, HTML, CSS, JavaScript, SQL, Git & GitHub.
           He ranked 1st in his first year (2024-25) and received a Merit Certificate.
-          He recently built an "Automated PDF Generator for Student Results" and a professional portfolio.
+          He developed an "Automated PDF Generator for Student Results" which uses Python (Pandas, OpenPyXL, and FPDF/ReportLab) to convert Excel data into professional result cards.
+          He also built this professional portfolio.
           He likes learning new things, traveling, and exploring technology.
           
           Answer visitor questions politely and professionally as if you were his personal concierge.

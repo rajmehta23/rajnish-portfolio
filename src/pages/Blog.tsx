@@ -17,25 +17,25 @@ import { cn } from '@/lib/utils';
 const mockPosts = [
   {
     id: '1',
-    title: 'How I built my Portfolio with AI',
+    title: 'How I built my Portfolio with modern Web Tech',
     date: 'April 15, 2026',
     author: 'Rajnish Kumar',
     readTime: '5 min read',
-    excerpt: 'Exploring the boundary between human creativity and AI-powered development tools...',
+    excerpt: 'Exploring the boundaries of interactive design and modern development tools...',
     content: `
-      ## The Convergence of Human & Artificial Intelligence
-      Implementing a high-performance portfolio in 2026 isn't just about writing code; it's about orchestrating AI agents to handle the boilerplate while focusing on design and logic.
+      ## The Convergence of Design & Tech
+      Implementing a high-performance portfolio in 2026 isn't just about writing code; it's about orchestrating modern tooling to handle the boilerplate while focusing on design and logic.
       
-      ### Why AI-First Development?
-      The speed of iteration is the primary advantage. What used to take days—setting up a responsive grid, configuring a CMS, and styling components—now happens in minutes. I used localized AI agents to build the glassmorphism UI seen on this site.
+      ### Why Modern Frameworks?
+      The speed of iteration is the primary advantage. What used to take days—setting up a responsive grid, configuring a CMS, and styling components—now happens in minutes. I used modern automation tools to build the glassmorphism UI seen on this site.
       
       #### Technical Implementation
-      I leveraged React 19 and Tailwind CSS. The AI helped optimize the GSAP animations for smoother performance on mobile devices.
+      I leveraged React 19 and Tailwind CSS. Modern tooling helped optimize the GSAP animations for smoother performance on mobile devices.
       
       ### The Human Touch
-      While AI wrote the initial scaffolding, the design recipes, typography pairings, and interaction nuances were handcrafted to ensure a unique "premium" feel that generic generators lack.
+      While frameworks provided the initial scaffolding, the design recipes, typography pairings, and interaction nuances were handcrafted to ensure a unique "premium" feel that generic templates lack.
     `,
-    tags: ['AI', 'Tech', 'Web Dev'],
+    tags: ['Tech', 'Web Dev', 'Design'],
     image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=60&w=600&h=300'
   },
   {
@@ -47,7 +47,7 @@ const mockPosts = [
     excerpt: 'Sharing my experiences, the challenges I faced, and how I ranked 1st in my college...',
     content: `
       ## The Academic Leap
-      Starting a BCA during the AI revolution has been a transformation. I entered my first year at St. Xavier's with a passion for logic and left with a deep understanding of software engineering fundamentals.
+      Starting a BCA during this era of digital transformation has been incredible. I entered my first year at St. Xavier's with a passion for logic and left with a deep understanding of software engineering fundamentals.
       
       ### Ranking 1st in Class
       Achieving the first rank wasn't about rote learning. It was about applying academic concepts to real projects. My "Automated Result Generator" was born out of a desire to help my peers understand their data better.
@@ -208,7 +208,7 @@ export default function Blog() {
                   <div className="bg-primary/5 p-8 rounded-3xl text-center max-w-2xl">
                     <h4 className="text-2xl font-display font-bold mb-3">Enjoyed this article?</h4>
                     <p className="text-muted-foreground mb-6">
-                      I write about modern development, AI integration, and the journey of a computer science student. 
+                      I write about modern development, interactive design, and the journey of a computer science student. 
                       Feel free to reach out if you have questions!
                     </p>
                     <div className="flex justify-center gap-4">

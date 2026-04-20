@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "rajnish-portfolio",
+  "description": "Personal portfolio project showcasing modern web development and interactive features.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
