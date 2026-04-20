@@ -4,7 +4,7 @@
  */
 
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from './components/ThemeProvider';
 import Navbar from './components/Navbar';
@@ -29,7 +29,7 @@ function Loading() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="portfolio-theme">
-      <BrowserRouter>
+      <HashRouter>
         <div className="min-h-screen flex flex-col selection:bg-primary/30 relative">
           <Suspense fallback={null}>
             <ThreeCanvas />
@@ -49,7 +49,7 @@ export default function App() {
           <VirtualAgent />
           <Toaster position="bottom-right" />
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   );
 }
