@@ -85,7 +85,7 @@ export default function Hero() {
             </div>
             <div className="action-anim">
               <a 
-                href={`${import.meta.env.BASE_URL}resume.pdf`}
+                href="resume.pdf"
                 target="_blank"
                 rel="noreferrer"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8 hover:scale-105 transition-transform group")}
@@ -127,7 +127,7 @@ export default function Hero() {
             <div className="relative w-full h-full rounded-full glass-card overflow-hidden group border-2 border-primary/30 flex items-center justify-center bg-muted shadow-2xl">
               {!imageError ? (
                 <img 
-                  src="/rajnish-portfolio/rajnish_profile.jpg" 
+                  src="rajnish_profile.jpg" 
                   alt="Rajnish Kumar" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={() => setImageError(true)}
