@@ -127,7 +127,8 @@ export default function Hero() {
             <div className="relative w-full h-full rounded-full glass-card overflow-hidden group border-2 border-primary/30 flex items-center justify-center bg-muted shadow-2xl">
               {!imageError ? (
                 <img 
-                  src="rajnish_profile.jpg" 
+                  src="https://lh3.googleusercontent.com/d/1r23REhhTKrDHqkF3CFPJS1KD2uOsvjuy" 
+                  referrerPolicy="no-referrer"
                   alt="Rajnish Kumar" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={() => setImageError(true)}

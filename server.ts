@@ -3,12 +3,32 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Resend } from 'resend';
+import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+let aiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("GEMINI_API_KEY environment variable is required for Assistant.");
+    }
+    aiClient = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return aiClient;
+}
 
 async function startServer() {
   const app = express();
@@ -68,6 +88,56 @@ async function startServer() {
         success: false, 
         error: "SERVER_ERROR", 
         message: error?.message || "Internal server error occurred while sending email." 
+      });
+    }
+  });
+
+  // Gemini assistant API route
+  app.post("/api/gemini", async (req, res) => {
+    try {
+      const { prompt, context } = req.body;
+      const client = getGeminiClient();
+      
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: [{ 
+          role: 'user', 
+          parts: [{ 
+            text: `
+              You are a virtual agent for Rajnish Kumar's portfolio website. 
+              Rajnish is a BCA 2nd-year student at St. Xavier's College of Management and Technology, Patna (2024-2027 batch).
+              He is an aspiring Software / Full Stack Developer.
+              His skills include: Java, C, C++, Python, HTML, CSS, JavaScript, SQL, Git & GitHub.
+              He ranked 1st in his first year (2024-25) and received a Merit Certificate.
+              He developed an "Automated PDF Generator for Student Results" which uses Python (Pandas, OpenPyXL, and FPDF/ReportLab) to convert Excel data into professional result cards.
+              He also built this professional portfolio.
+              He likes learning new things, traveling, and exploring technology.
+              
+              Answer visitor questions politely and professionally as if you were his personal concierge.
+              If you don't know something specific about him, suggest they use the contact form.
+              Keep responses concise and engaging.
+              
+              Current Chat Context/History:
+              ${context || ''}
+              
+              User Question: ${prompt}
+            ` 
+          }] 
+        }],
+        config: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+        },
+      });
+
+      res.status(200).json({ success: true, text: response.text || "I'm sorry, I couldn't process that." });
+    } catch (error: any) {
+      console.error("Gemini Assistant route error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "GEMINI_ERROR",
+        message: error?.message || "Virtual Assistant is currently overloaded. Please try again later!" 
       });
     }
   });
