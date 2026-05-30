@@ -39,8 +39,48 @@ export default function Skills() {
   const [skillCategories, setSkillCategories] = useState(initialSkillCategories);
 
   useEffect(() => {
-    // Skills are currently handled via initial list
-    // In future versions, you can Fetch from Firestore for full dynamic control
+    const fetchFirestoreSkills = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'skills'));
+        const docs = querySnapshot.docs.map(doc => doc.data());
+        if (docs.length > 0) {
+          // Group by category
+          const categoriesMap: { [key: string]: { name: string; level: number }[] } = {};
+          
+          // Initialize standard groups to ensure clean layout structure
+          const targetCategories = ['Languages', 'Frontend & Backend', 'Tools & Version Control'];
+          targetCategories.forEach(cat => {
+            categoriesMap[cat] = [];
+          });
+
+          docs.forEach(docData => {
+            const cat = docData.category || 'Others';
+            if (!categoriesMap[cat]) {
+              categoriesMap[cat] = [];
+            }
+            categoriesMap[cat].push({
+              name: docData.name || '',
+              level: Number(docData.level) || 0
+            });
+          });
+
+          // Format for rendering
+          const formatted = Object.keys(categoriesMap)
+            .map(title => ({
+              title,
+              skills: categoriesMap[title]
+            }))
+            .filter(cat => cat.skills.length > 0);
+
+          if (formatted.length > 0) {
+            setSkillCategories(formatted);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading custom skills:', err);
+      }
+    };
+    fetchFirestoreSkills();
   }, []);
 
   return (

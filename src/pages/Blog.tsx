@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 
 const mockPosts = [
   {
@@ -85,11 +87,37 @@ const mockPosts = [
 
 export default function Blog() {
   const [search, setSearch] = useState('');
-  const [selectedPost, setSelectedPost] = useState<typeof mockPosts[0] | null>(null);
+  const [posts, setPosts] = useState<any[]>(mockPosts);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            ...d,
+            image: d.coverImage || d.image || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=60&w=600&h=300',
+            date: d.date || (d.createdAt ? d.createdAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })),
+            author: d.author || 'Rajnish Kumar',
+          };
+        });
+        if (data.length > 0) {
+          setPosts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching blog posts from Firestore:', err);
+      }
+    };
+    fetchPosts();
+  }, []);
   
-  const filteredPosts = mockPosts.filter(post => 
+  const filteredPosts = posts.filter(post => 
     post.title.toLowerCase().includes(search.toLowerCase()) ||
-    post.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
+    post.tags.some((tag: string) => tag.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (

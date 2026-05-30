@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -47,12 +47,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 
 export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
+    setIsInIframe(window.self !== window.top);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -63,10 +72,24 @@ export default function Admin() {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
       await signInWithPopup(auth, provider);
       toast.success('Logged in successfully!');
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
+    } catch (error: any) {
+      console.error('Google Auth login error:', error);
+      let errorMsg = error?.message || 'Login failed. Please try again.';
+      if (error?.code === 'auth/popup-blocked') {
+        errorMsg = 'Pop-up window was blocked by your browser settings. Please allow popups or try opening the app in a new tab.';
+      } else if (error?.code === 'auth/popup-closed-by-user') {
+        errorMsg = 'The login window was closed before completing authentication. Please try again.';
+      } else if (error?.code === 'auth/network-request-failed') {
+        errorMsg = 'Network request failed. Check your internet connection.';
+      }
+      toast.error(errorMsg, {
+        duration: 8000
+      });
     }
   };
 
@@ -83,20 +106,71 @@ export default function Admin() {
 
   if (!user) return (
     <div className="pt-40 container mx-auto px-6 max-w-md text-center">
-      <div className="p-10 glass-card rounded-3xl border-primary/20 border shadow-2xl">
+      <div className="p-10 glass-card rounded-3xl border-primary/20 border shadow-2xl relative overflow-hidden">
         <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-8 animate-pulse">
           <ShieldCheck className="w-12 h-12 text-primary" />
         </div>
         <h1 className="text-3xl font-display font-bold mb-4 tracking-tight">Admin Hub</h1>
-        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+        <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
           Secure portal to manage your portfolio content, real-time analytics, and visitor interactions.
         </p>
-        <Button onClick={handleLogin} className="w-full rounded-full h-12 text-lg shadow-lg hover:shadow-primary/20 transition-all font-bold" size="lg">
-          Authenticate with Google
-        </Button>
+
+        {isInIframe ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-200 leading-relaxed text-left">
+              💡 <strong>IFrame Restriction Detected:</strong> Browser security rules usually prevent Google authentication popup windows from inside the editor preview frame.
+            </div>
+            <a
+              href={window.location.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ size: "lg", variant: "default" }),
+                "w-full rounded-full h-12 text-md transition-all font-bold gap-2 shadow-lg"
+              )}
+            >
+              Open App in New Tab to Login <ExternalLink size={18} />
+            </a>
+          </div>
+        ) : (
+          <Button onClick={handleLogin} className="w-full rounded-full h-12 text-lg shadow-lg hover:shadow-primary/20 transition-all font-bold" size="lg">
+            Authenticate with Google
+          </Button>
+        )}
       </div>
     </div>
   );
+
+  const ALLOWED_EMAIL = 'rajnishkumarschool911@gmail.com';
+  const isAuthorized = user && user.email === ALLOWED_EMAIL;
+
+  if (user && !isAuthorized) {
+    return (
+      <div className="pt-40 container mx-auto px-6 max-w-md text-center">
+        <div className="p-10 glass-card rounded-3xl border-destructive/20 border shadow-2xl relative overflow-hidden">
+          <div className="w-20 h-20 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <ShieldCheck className="w-12 h-12 text-destructive" />
+          </div>
+          <h1 className="text-3xl font-display font-bold mb-4 tracking-tight text-destructive">Access Restricted</h1>
+          <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
+            Access to System Control is restricted. The account <span className="font-semibold text-foreground/90">{user.email || 'unknown'}</span> is not authorized to edit this portfolio.
+          </p>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted/40 border border-white/5 rounded-2xl text-xs text-muted-foreground leading-relaxed text-left">
+              Authentication restricts administrative controls strictly to <strong className="text-primary">{ALLOWED_EMAIL}</strong>.
+            </div>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              className="w-full rounded-full h-12 text-md transition-all font-bold border-white/10 hover:bg-destructive/10 hover:text-destructive gap-2"
+            >
+              <LogOut size={16} /> Sign Out & Switch Account
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-24 pb-24 container mx-auto px-6">
@@ -154,14 +228,11 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="skills">
-           <div className="glass-card p-16 text-center rounded-[2rem] border-white/5">
-              <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Code className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Technical Arsenal</h3>
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">Manage your professional skills, proficiency levels, and tech stack categories.</p>
-              <Button disabled className="rounded-full px-10 border-dashed">Module Under Construction</Button>
-           </div>
+          <AdminSkills />
+        </TabsContent>
+
+        <TabsContent value="blog">
+          <AdminBlog />
         </TabsContent>
 
         <TabsContent value="system">
@@ -175,6 +246,7 @@ export default function Admin() {
 function AdminProjects() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingProject, setEditingProject] = useState<any | null>(null);
   const [newProject, setNewProject] = useState({ 
     title: '', 
     description: '', 
@@ -186,10 +258,20 @@ function AdminProjects() {
 
   const fetchProjects = async () => {
     setLoading(true);
-    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    setProjects(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setLoading(false);
+    try {
+      const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      setProjects(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      try {
+        handleFirestoreError(err, OperationType.GET, 'projects');
+      } catch (wrappedErr: any) {
+        toast.error('Failed to load projects: ' + wrappedErr.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -210,16 +292,66 @@ function AdminProjects() {
       setNewProject({ title: '', description: '', image: '', tags: '', github: '#', live: '#' });
       fetchProjects();
       toast.success('Project deployed successfully!');
-    } catch (err) {
-      toast.error('Failed to add project');
+    } catch (err: any) {
+      console.error('Error adding project:', err);
+      let userFriendlyMsg = err.message || 'Check firestore permissions.';
+      try {
+        handleFirestoreError(err, OperationType.CREATE, 'projects');
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to add project: ' + userFriendlyMsg, { duration: 8000 });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
-    await deleteDoc(doc(db, 'projects', id));
-    fetchProjects();
-    toast.error('Project removed from database');
+    try {
+      await deleteDoc(doc(db, 'projects', id));
+      fetchProjects();
+      toast.error('Project removed from database');
+    } catch (err: any) {
+      console.error('Error deleting project:', err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.DELETE, `projects/${id}`);
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to delete project: ' + userFriendlyMsg);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject || !editingProject.title) return;
+    try {
+      const tagsArray = typeof editingProject.tags === 'string'
+        ? editingProject.tags.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : editingProject.tags;
+
+      await updateDoc(doc(db, 'projects', editingProject.id), {
+        title: editingProject.title,
+        description: editingProject.description || '',
+        image: editingProject.image || '',
+        tags: tagsArray || [],
+        github: editingProject.github || '#',
+        live: editingProject.live || '#',
+        updatedAt: serverTimestamp()
+      });
+      setEditingProject(null);
+      fetchProjects();
+      toast.success('Project updated successfully!');
+    } catch (err: any) {
+      console.error('Error updating project:', err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, `projects/${editingProject.id}`);
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to update project: ' + userFriendlyMsg);
+    }
   };
 
   return (
@@ -233,7 +365,7 @@ function AdminProjects() {
           <CardContent>
             <form className="space-y-5" onSubmit={handleAdd}>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Title</label>
                 <Input 
                   value={newProject.title} 
                   onChange={(e) => setNewProject({...newProject, title: e.target.value})}
@@ -242,7 +374,7 @@ function AdminProjects() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Description</label>
                 <Textarea 
                   value={newProject.description}
                   onChange={(e) => setNewProject({...newProject, description: e.target.value})}
@@ -252,7 +384,7 @@ function AdminProjects() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Image URL</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Image URL</label>
                 <Input 
                   value={newProject.image} 
                   onChange={(e) => setNewProject({...newProject, image: e.target.value})}
@@ -261,7 +393,7 @@ function AdminProjects() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (comma separated)</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Tags (comma separated)</label>
                 <Input 
                   value={newProject.tags} 
                   onChange={(e) => setNewProject({...newProject, tags: e.target.value})}
@@ -271,7 +403,7 @@ function AdminProjects() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">GitHub</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">GitHub</label>
                   <Input 
                     value={newProject.github} 
                     onChange={(e) => setNewProject({...newProject, github: e.target.value})}
@@ -280,7 +412,7 @@ function AdminProjects() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live URL</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Live URL</label>
                   <Input 
                     value={newProject.live} 
                     onChange={(e) => setNewProject({...newProject, live: e.target.value})}
@@ -341,7 +473,7 @@ function AdminProjects() {
                           <p className="text-sm text-muted-foreground line-clamp-1 max-w-sm">{p.description}</p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10">
+                          <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="rounded-full hover:bg-white/10">
                             <Edit size={16} className="text-muted-foreground" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="rounded-full text-destructive hover:bg-destructive/10">
@@ -357,6 +489,79 @@ function AdminProjects() {
           </AnimatePresence>
         )}
       </div>
+
+      {/* Edit Project Dialog */}
+      <Dialog open={editingProject !== null} onOpenChange={(open) => !open && setEditingProject(null)}>
+        <DialogContent className="glass-card border-none max-w-lg p-8 rounded-3xl text-foreground bg-black/90 border border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold font-display">Edit Project</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm">Update project details dynamically.</DialogDescription>
+          </DialogHeader>
+          {editingProject && (
+            <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</label>
+                <Input 
+                  value={editingProject.title} 
+                  onChange={(e) => setEditingProject({...editingProject, title: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+                <Textarea 
+                  value={editingProject.description || ''}
+                  onChange={(e) => setEditingProject({...editingProject, description: e.target.value})}
+                  rows={3}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Image URL</label>
+                <Input 
+                  value={editingProject.image || ''} 
+                  onChange={(e) => setEditingProject({...editingProject, image: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (comma separated)</label>
+                <Input 
+                  value={Array.isArray(editingProject.tags) ? editingProject.tags.join(', ') : editingProject.tags || ''} 
+                  onChange={(e) => setEditingProject({...editingProject, tags: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">GitHub</label>
+                  <Input 
+                    value={editingProject.github || ''} 
+                    onChange={(e) => setEditingProject({...editingProject, github: e.target.value})}
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live URL</label>
+                  <Input 
+                    value={editingProject.live || ''} 
+                    onChange={(e) => setEditingProject({...editingProject, live: e.target.value})}
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button type="button" variant="ghost" onClick={() => setEditingProject(null)} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button type="submit" className="rounded-xl px-6">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -538,6 +743,506 @@ function AdminSystem() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function AdminSkills() {
+  const [skills, setSkills] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newSkill, setNewSkill] = useState({
+    name: '',
+    level: 80,
+    category: 'Languages'
+  });
+
+  const categories = ['Languages', 'Frontend & Backend', 'Tools & Version Control'];
+
+  const fetchSkills = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, 'skills'));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSkills(data);
+    } catch (err: any) {
+      console.error(err);
+      try {
+        handleFirestoreError(err, OperationType.GET, 'skills');
+      } catch (wrappedErr: any) {
+        toast.error('Failed to load skills: ' + wrappedErr.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSkills();
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSkill.name) return;
+    try {
+      await addDoc(collection(db, 'skills'), {
+        name: newSkill.name,
+        level: Number(newSkill.level),
+        category: newSkill.category,
+        createdAt: serverTimestamp()
+      });
+      setNewSkill({ name: '', level: 80, category: 'Languages' });
+      fetchSkills();
+      toast.success('Skill added successfully!');
+    } catch (err: any) {
+      console.error(err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.CREATE, 'skills');
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to add skill: ' + userFriendlyMsg);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this skill?')) return;
+    try {
+      await deleteDoc(doc(db, 'skills', id));
+      fetchSkills();
+      toast.success('Skill removed');
+    } catch (err: any) {
+      console.error(err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.DELETE, `skills/${id}`);
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to delete skill: ' + userFriendlyMsg);
+    }
+  };
+
+  return (
+    <div className="grid lg:grid-cols-3 gap-10">
+      <div className="lg:col-span-1">
+        <Card className="glass-card border-white/5 rounded-[2rem] sticky top-44 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl">Skill Architect</CardTitle>
+            <CardDescription>Add technical skills to your portfolio</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-5" onSubmit={handleAdd}>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Skill Name</label>
+                <Input 
+                  value={newSkill.name} 
+                  onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
+                  placeholder="e.g., TypeScript" 
+                  className="rounded-xl border-white/10 bg-black/20 focus:bg-black/40 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Proficiency ({newSkill.level}%)</label>
+                <Input 
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={newSkill.level} 
+                  onChange={(e) => setNewSkill({...newSkill, level: Number(e.target.value)})}
+                  className="w-full bg-black/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Category</label>
+                <select 
+                  value={newSkill.category}
+                  onChange={(e) => setNewSkill({...newSkill, category: e.target.value})}
+                  className="w-full h-11 px-3 rounded-xl border border-white/10 bg-black/40 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  {categories.map(cat => <option key={cat} value={cat} className="bg-black text-foreground">{cat}</option>)}
+                </select>
+              </div>
+              <Button className="w-full rounded-xl h-11 font-bold shadow-lg shadow-primary/10 transition-all">
+                <Plus className="mr-2 h-4 w-4" /> Add Skill
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="lg:col-span-2 space-y-6">
+        {loading ? (
+          <div className="grid gap-4">
+            {[1,2,3].map(i => <div key={i} className="h-20 glass animate-pulse rounded-2xl" />)}
+          </div>
+        ) : skills.length === 0 ? (
+          <div className="p-20 glass rounded-[2.5rem] border border-dashed border-white/10 text-center space-y-4">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto">
+              <Code className="text-muted-foreground h-8 w-8" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-lg font-bold">No custom skills in database</h4>
+              <p className="text-muted-foreground text-sm">Showing the fallback/static resume skills on your main page. Add skills here to customize dynamically!</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {categories.map((category) => {
+              const categorySkills = skills.filter(s => s.category === category);
+              if (categorySkills.length === 0) return null;
+              return (
+                <Card key={category} className="glass-card border-white/5 p-6 rounded-3xl">
+                  <h3 className="text-lg font-bold text-primary mb-4">{category}</h3>
+                  <div className="space-y-4">
+                    {categorySkills.map(s => (
+                      <div key={s.id} className="flex justify-between items-center bg-black/20 p-4 rounded-xl">
+                        <div className="flex-grow space-y-1">
+                          <div className="font-bold flex justify-between max-w-sm">
+                            <span className="text-foreground">{s.name}</span>
+                            <span className="text-primary">{s.level}%</span>
+                          </div>
+                          <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden max-w-sm">
+                            <div className="bg-primary h-full" style={{ width: `${s.level}%` }} />
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)} className="rounded-full text-destructive hover:bg-destructive/10 shrink-0">
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdminBlog() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [newPost, setNewPost] = useState({
+    title: '',
+    excerpt: '',
+    content: '',
+    coverImage: '',
+    tags: '',
+    readTime: '5 min read'
+  });
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(data);
+    } catch (err: any) {
+      console.error(err);
+      try {
+        handleFirestoreError(err, OperationType.GET, 'blog');
+      } catch (wrappedErr: any) {
+        toast.error('Failed to load blog posts: ' + wrappedErr.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPost.title || !newPost.content) return;
+    try {
+      const tagsArray = newPost.tags.split(',').map(s => s.trim()).filter(Boolean);
+      await addDoc(collection(db, 'blog'), {
+        title: newPost.title,
+        excerpt: newPost.excerpt,
+        content: newPost.content,
+        coverImage: newPost.coverImage || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=60&w=600&h=300',
+        tags: tagsArray,
+        readTime: newPost.readTime,
+        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        createdAt: serverTimestamp()
+      });
+      setNewPost({ title: '', excerpt: '', content: '', coverImage: '', tags: '', readTime: '5 min read' });
+      fetchPosts();
+      toast.success('Blog post published successfully!');
+    } catch (err: any) {
+      console.error(err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.CREATE, 'blog');
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to publish post: ' + userFriendlyMsg);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this blog post?')) return;
+    try {
+      await deleteDoc(doc(db, 'blog', id));
+      fetchPosts();
+      toast.success('Post archived successfully');
+    } catch (err: any) {
+      console.error(err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.DELETE, `blog/${id}`);
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to delete post: ' + userFriendlyMsg);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost || !editingPost.title) return;
+    try {
+      const tagsArray = typeof editingPost.tags === 'string'
+        ? editingPost.tags.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : editingPost.tags;
+
+      await updateDoc(doc(db, 'blog', editingPost.id), {
+        title: editingPost.title,
+        excerpt: editingPost.excerpt || '',
+        content: editingPost.content || '',
+        coverImage: editingPost.coverImage || '',
+        tags: tagsArray || [],
+        readTime: editingPost.readTime || '5 min read',
+        updatedAt: serverTimestamp()
+      });
+      setEditingPost(null);
+      fetchPosts();
+      toast.success('Post updated successfully!');
+    } catch (err: any) {
+      console.error(err);
+      let userFriendlyMsg = err.message;
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, `blog/${editingPost.id}`);
+      } catch (wrappedErr: any) {
+        userFriendlyMsg = wrappedErr.message;
+      }
+      toast.error('Failed to update post: ' + userFriendlyMsg);
+    }
+  };
+
+  return (
+    <div className="grid lg:grid-cols-3 gap-10">
+      <div className="lg:col-span-1">
+        <Card className="glass-card border-white/5 rounded-[2rem] sticky top-44 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl">Content Creator</CardTitle>
+            <CardDescription>Publish a new entry in your digital journal</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-4" onSubmit={handleAddSubmit}>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Article Title</label>
+                <Input
+                  value={newPost.title}
+                  onChange={(e) => setNewPost({...newPost, title: e.target.value})}
+                  placeholder="e.g., Mastering React 19"
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Excerpt</label>
+                <Input
+                  value={newPost.excerpt}
+                  onChange={(e) => setNewPost({...newPost, excerpt: e.target.value})}
+                  placeholder="Brief pitch for the article..."
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Content</label>
+                <Textarea
+                  value={newPost.content}
+                  onChange={(e) => setNewPost({...newPost, content: e.target.value})}
+                  placeholder="Write in markdown format..."
+                  rows={5}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Cover Image URL</label>
+                <Input
+                  value={newPost.coverImage}
+                  onChange={(e) => setNewPost({...newPost, coverImage: e.target.value})}
+                  placeholder="Unsplash image URL"
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Tags</label>
+                  <Input
+                    value={newPost.tags}
+                    onChange={(e) => setNewPost({...newPost, tags: e.target.value})}
+                    placeholder="Tech, Web, Code"
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground animate-pulse">Read Time</label>
+                  <Input
+                    value={newPost.readTime}
+                    onChange={(e) => setNewPost({...newPost, readTime: e.target.value})}
+                    placeholder="e.g., 5 min read"
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+              </div>
+              <Button className="w-full rounded-xl h-11 font-bold shadow-lg shadow-primary/10 transition-all">
+                <Plus className="mr-2 h-4 w-4" /> Publish Post
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="lg:col-span-2 space-y-6">
+        {loading ? (
+          <div className="grid gap-4">
+            {[1,2,3].map(i => <div key={i} className="h-24 glass animate-pulse rounded-2xl" />)}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="p-20 glass rounded-[2.5rem] border border-dashed border-white/10 text-center space-y-4">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto">
+              <FileText className="text-muted-foreground h-8 w-8" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-lg font-bold">No Dynamic Articles</h4>
+              <p className="text-muted-foreground text-sm">Showing initial mockposts in Journal. Insert posts here to change dynamically!</p>
+            </div>
+          </div>
+        ) : (
+          <AnimatePresence>
+            <div className="grid gap-6">
+              {posts.map((p, idx) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <Card className="glass-card border-white/5 group overflow-hidden rounded-[1.5rem] hover:bg-white/[0.03] transition-all">
+                    <CardContent className="p-0 flex flex-col sm:flex-row">
+                      <div className="sm:w-32 h-32 sm:h-auto shrink-0 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-500">
+                        <img src={p.coverImage} className="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-500" />
+                      </div>
+                      <div className="p-6 flex-grow flex justify-between items-center gap-6">
+                        <div className="space-y-2">
+                          <h4 className="text-xl font-bold tracking-tight text-foreground">{p.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-1">{p.excerpt}</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {p.tags?.map((t: string) => (
+                              <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button variant="ghost" size="icon" onClick={() => setEditingPost(p)} className="rounded-full hover:bg-white/10">
+                            <Edit size={16} className="text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="rounded-full text-destructive hover:bg-destructive/10">
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </AnimatePresence>
+        )}
+      </div>
+
+      {/* Edit Blog Dialog */}
+      <Dialog open={editingPost !== null} onOpenChange={(open) => !open && setEditingPost(null)}>
+        <DialogContent className="glass-card border-none max-w-lg p-8 rounded-3xl text-foreground bg-black/90 border border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold font-display">Edit Journal Entry</DialogTitle>
+          </DialogHeader>
+          {editingPost && (
+            <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</label>
+                <Input
+                  value={editingPost.title}
+                  onChange={(e) => setEditingPost({...editingPost, title: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Excerpt</label>
+                <Input
+                  value={editingPost.excerpt || ''}
+                  onChange={(e) => setEditingPost({...editingPost, excerpt: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Content</label>
+                <Textarea
+                  value={editingPost.content || ''}
+                  onChange={(e) => setEditingPost({...editingPost, content: e.target.value})}
+                  rows={5}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</label>
+                <Input
+                  value={editingPost.coverImage || ''}
+                  onChange={(e) => setEditingPost({...editingPost, coverImage: e.target.value})}
+                  className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (comma separated)</label>
+                  <Input
+                    value={Array.isArray(editingPost.tags) ? editingPost.tags.join(', ') : editingPost.tags || ''}
+                    onChange={(e) => setEditingPost({...editingPost, tags: e.target.value})}
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Read Time</label>
+                  <Input
+                    value={editingPost.readTime || ''}
+                    onChange={(e) => setEditingPost({...editingPost, readTime: e.target.value})}
+                    className="rounded-xl border-white/10 bg-black/20 text-foreground"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button type="button" variant="ghost" onClick={() => setEditingPost(null)} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button type="submit" className="rounded-xl px-6">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
