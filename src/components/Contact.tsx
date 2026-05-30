@@ -29,31 +29,58 @@ export default function Contact() {
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      // 1. Save to Firestore as backup
-      await addDoc(collection(db, 'messages'), {
-        ...data,
-        status: 'unread',
-        createdAt: serverTimestamp(),
-      });
+      let firestoreSaved = false;
       
-      // 2. Send via Backend API for real Email notification
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      // 1. Attempt to save to Firestore as secure database backup
+      try {
+        await addDoc(collection(db, 'messages'), {
+          ...data,
+          status: 'unread',
+          createdAt: serverTimestamp(),
+        });
+        firestoreSaved = true;
+      } catch (firestoreError) {
+        console.warn('Backup Firestore write failed, using direct email delivery:', firestoreError);
+      }
+      
+      // 2. Clear user interface feedback for active submission, and send email via Resend API
+      let emailSent = false;
+      let emailErrorMsg = '';
+      
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to trigger email notification');
+        if (response.ok) {
+          emailSent = true;
+        } else {
+          emailErrorMsg = result.message || 'Email delivery configuration check';
+        }
+      } catch (apiError: any) {
+        console.error('API endpoint unreachable:', apiError);
+        emailErrorMsg = apiError.message || 'Server connection error';
       }
 
-      toast.success('Message sent! I will check my email and get back to you.');
-      reset();
-    } catch (error) {
+      // 3. Evaluate success outcomes
+      if (emailSent) {
+        toast.success('Your message was sent successfully! I will check my email & get back to you.');
+        reset();
+      } else if (firestoreSaved) {
+        // If firestore save succeeded but API failed or wasn't configured
+        toast.success("Message saved! Your message was received and saved to Rajnish's secure database.");
+        reset();
+      } else {
+        // If both failed
+        throw new Error(emailErrorMsg || 'Both backup database and email transmission were unreachable.');
+      }
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message. Please try again later.');
+      toast.error(error.message || 'Failed to send message. Please try again later.');
     }
   };
 
